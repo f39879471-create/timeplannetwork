@@ -7,82 +7,241 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Segoe UI, sans-serif; background: #f0f2f5; }
-    #app { max-width: 900px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .card { background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; border: 1px solid #ddd; }
-    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f9f9f9; }
-    button { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; background: #4f46e5; color: white; }
+    body {
+      font-family: Segoe UI, sans-serif;
+      background: #dbeafe; /* голубой фон */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* Центрирование формы входа */
+    #app {
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px auto;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .auth-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .auth-card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      width: 400px;
+      text-align: center;
+    }
+    .auth-card h2 {
+      margin-bottom: 8px;
+      color: #1e40af;
+    }
+    .auth-card .subtitle {
+      color: #64748b;
+      margin-bottom: 24px;
+      font-size: 1.1em;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    th { background: #f1f5f9; }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #64748b; }
     button.danger { background: #dc2626; }
-    input, select, textarea { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 100%; margin: 5px 0; }
-    label { font-weight: 500; }
+    input, select, textarea {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      width: 100%;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    label { font-weight: 500; display: block; margin-top: 8px; }
     .flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .nav { margin-bottom: 20px; }
-    .error { color: red; font-size: 14px; }
+    .nav {
+      background: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .nav-tabs { display: flex; gap: 20px; }
+    .nav-tab {
+      cursor: pointer;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 500;
+      background: #f1f5f9;
+      color: #334155;
+      transition: 0.2s;
+    }
+    .nav-tab.active { background: #2563eb; color: white; }
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .day-cell {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 180px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      transition: 0.2s;
+      border: 2px dashed transparent;
+      position: relative;
+    }
+    .day-cell.weekend { opacity: 0.6; background: #f8fafc; }
+    .day-cell.drag-over { border-color: #2563eb; background: #eff6ff; }
+    .day-header {
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+      color: #1e293b;
+    }
+    .day-hours {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #2563eb;
+    }
+    .time-entry-pill {
+      background: #e0e7ff;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      margin: 2px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .task-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .task-item {
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 6px;
+      margin: 4px 0;
+      cursor: grab;
+      border: 1px solid #e2e8f0;
+    }
+    .task-item:active { cursor: grabbing; }
+    .layout {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .calendar-section { flex: 3; }
+    .task-section { flex: 1; }
+    .news-item {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .hidden { display: none; }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      width: 500px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
   <div id="app"></div>
 
   <script>
-    // ----- ВСТАВЬТЕ РЕАЛЬНЫЕ ДАННЫЕ -----
     const SUPABASE_URL = 'https://lfnvvaqysqxgzjydpdhe.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbnZ2YXF5c3F4Z3pqeWRwZGhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMjIwNDYsImV4cCI6MjA5OTg5ODA0Nn0.uvvclwp0_Fa0nenCCUi9lSPERtHsDIx6uTtI4CfOMkY';
-    // ------------------------------------
-
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
     let currentProfile = null;
     let realtimeStarted = false;
-
     const app = document.getElementById('app');
 
-    // Проверка сессии
+    // ── АВТОРИЗАЦИЯ ──
     async function checkSession() {
       const { data: { session } } = await db.auth.getSession();
       if (session) {
         currentUser = session.user;
         await loadProfile();
-        renderMain();
+        renderMainApp();
       } else {
-        renderAuth();
+        renderAuthScreen();
       }
     }
 
-    // Загрузка профиля с защитой от отсутствия записи
     async function loadProfile() {
-      const { data } = await db
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
-      if (data) {
-        currentProfile = data;
-      } else {
-        // Если записи в profiles нет – создаём виртуальный профиль
-        currentProfile = {
-          id: currentUser.id,
-          full_name: currentUser.email,
-          role: 'employee'
-        };
-      }
+      const { data } = await db.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+      currentProfile = data || { id: currentUser.id, full_name: currentUser.email, role: 'employee' };
     }
 
-    // Авторизация
-    function renderAuth() {
+    function renderAuthScreen() {
       app.innerHTML = `
-        <h2>Вход в TimeSheet</h2>
-        <div class="card">
-          <label>Email: <input type="email" id="auth-email" /></label>
-          <label>Пароль: <input type="password" id="auth-password" /></label>
-          <div class="flex">
-            <button id="login-btn">Войти</button>
-            <button id="signup-btn">Регистрация</button>
+        <div class="auth-wrapper">
+          <div class="auth-card">
+            <h2>Добро пожаловать. Опять</h2>
+            <div class="subtitle">TimeSheet</div>
+            <label>Email: <input type="email" id="auth-email" /></label>
+            <label>Пароль: <input type="password" id="auth-password" /></label>
+            <div class="flex" style="justify-content: center; margin-top: 20px;">
+              <button id="login-btn">Войти</button>
+              <button id="signup-btn" class="secondary">Регистрация</button>
+            </div>
+            <div id="auth-error" style="color:red; margin-top:10px;"></div>
           </div>
-          <div id="auth-error" class="error"></div>
         </div>
       `;
       document.getElementById('login-btn').onclick = async () => {
@@ -90,193 +249,294 @@
         const password = document.getElementById('auth-password').value;
         const { data, error } = await db.auth.signInWithPassword({ email, password });
         if (error) document.getElementById('auth-error').innerText = error.message;
-        else { currentUser = data.user; await loadProfile(); renderMain(); }
+        else { currentUser = data.user; await loadProfile(); renderMainApp(); }
       };
       document.getElementById('signup-btn').onclick = async () => {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        const fullName = email.split('@')[0] || 'User';
-        const { data, error } = await db.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: fullName } }
-        });
+        const fullName = email.split('@')[0];
+        const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
         if (error) {
           document.getElementById('auth-error').innerText = error.message;
         } else if (data.user) {
-          // Создаём запись в profiles сразу после регистрации
-          await db.from('profiles').insert({
-            id: data.user.id,
-            full_name: fullName,
-            role: 'employee'
-          });
+          await db.from('profiles').insert({ id: data.user.id, full_name: fullName, role: 'employee' });
           document.getElementById('auth-error').innerText = 'Регистрация успешна. Теперь войдите.';
         }
       };
     }
 
-    // Основной интерфейс
-    async function renderMain() {
+    // ── ГЛАВНОЕ ПРИЛОЖЕНИЕ ──
+    let currentTab = 'dashboard'; // dashboard | news
+
+    function renderMainApp() {
       app.innerHTML = `
-        <div class="nav flex">
-          <span><b>${currentProfile.full_name || currentUser.email}</b> (${currentProfile.role})</span>
-          <button id="logout-btn">Выйти</button>
+        <div>
+          <div class="nav">
+            <div class="nav-tabs">
+              <span class="nav-tab ${currentTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard">Панель управления</span>
+              <span class="nav-tab ${currentTab === 'news' ? 'active' : ''}" data-tab="news">Новости компании</span>
+            </div>
+            <div class="flex">
+              <span><b>${currentProfile.full_name}</b> (${currentProfile.role})</span>
+              <button id="logout-btn" class="secondary">Выйти</button>
+            </div>
+          </div>
+          <div id="tab-content"></div>
         </div>
-        <div id="main-content">Загрузка...</div>
       `;
+
       document.getElementById('logout-btn').onclick = async () => {
         await db.auth.signOut();
         currentUser = null; currentProfile = null;
-        renderAuth();
+        renderAuthScreen();
       };
 
-      switch(currentProfile.role) {
-        case 'admin': case 'manager': await renderManagerView(); break;
-        case 'employee': await renderEmployeeView(); break;
-        case 'observer': await renderObserverView(); break;
-        default: document.getElementById('main-content').innerHTML = '<p>Неизвестная роль</p>';
-      }
-    }
-
-    // Менеджер/Админ
-    async function renderManagerView() {
-      const container = document.getElementById('main-content');
-      container.innerHTML = `
-        <h3>Панель управления</h3>
-        <div class="card"><h4>Создать проект</h4><input id="new-project-name" placeholder="Название проекта" /><button id="create-project-btn">Создать</button></div>
-        <div class="card"><h4>Создать задачу</h4><select id="task-project-select"></select><input id="task-title" placeholder="Название задачи" /><textarea id="task-desc" placeholder="Описание"></textarea><input type="date" id="task-deadline" /><button id="create-task-btn">Создать задачу</button></div>
-        <div class="card"><h4>Все задачи</h4><div id="all-tasks-table"></div></div>
-        <div class="card"><h4>Записи времени (все)</h4><div id="all-time-table"></div></div>
-      `;
-      const { data: projects } = await db.from('projects').select('*');
-      document.getElementById('task-project-select').innerHTML = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-
-      document.getElementById('create-project-btn').onclick = async () => {
-        const name = document.getElementById('new-project-name').value;
-        if (!name) return alert('Введите имя');
-        await db.from('projects').insert({ name, manager_id: currentUser.id });
-        await renderMain(); // вместо reload
-      };
-
-      document.getElementById('create-task-btn').onclick = async () => {
-        const project_id = document.getElementById('task-project-select').value;
-        const title = document.getElementById('task-title').value;
-        const description = document.getElementById('task-desc').value;
-        const deadline = document.getElementById('task-deadline').value || null;
-        if (!title) return alert('Введите название');
-        await db.from('tasks').insert({ project_id, title, description, deadline, created_by: currentUser.id });
-        await renderMain();
-      };
-
-      await renderAllTasksWithAssign();
-      await loadTimeEntriesTable('all-time-table');
-      subscribeToRealtime();
-    }
-
-    async function renderAllTasksWithAssign() {
-      const { data: tasks } = await db.from('tasks').select('*, projects(name)').order('created_at', { ascending: false });
-      const { data: users } = await db.from('profiles').select('id, full_name, role');
-      let html = '<table><tr><th>Проект</th><th>Задача</th><th>Статус</th><th>Исполнитель</th><th>Дедлайн</th><th>Действие</th></tr>';
-      tasks.forEach(t => {
-        const assignee = users?.find(u => u.id === t.assignee_id)?.full_name || 'Не назначен';
-        html += `<tr><td>${t.projects?.name || ''}</td><td>${t.title}</td><td>${t.status}</td><td>${assignee}</td><td>${t.deadline ? new Date(t.deadline).toLocaleDateString() : ''}</td>
-        <td><select id="assign-${t.id}" onchange="assignTask('${t.id}', this.value)"><option value="">-- назначить --</option>${users.map(u => `<option value="${u.id}" ${t.assignee_id === u.id ? 'selected' : ''}>${u.full_name} (${u.role})</option>`).join('')}</select></td></tr>`;
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.onclick = () => {
+          currentTab = tab.dataset.tab;
+          renderMainApp();
+        };
       });
-      html += '</table>';
-      document.getElementById('all-tasks-table').innerHTML = html;
+
+      if (currentTab === 'dashboard') renderDashboard();
+      else renderNews();
+      subscribeToRealtime();
     }
 
-    async function assignTask(taskId, userId) {
-      if (!userId) return;
-      await db.from('tasks').update({ assignee_id: userId }).eq('id', taskId);
-      await renderAllTasksWithAssign(); // только обновляем таблицу задач
-    }
-
-    // Сотрудник
-    async function renderEmployeeView() {
-      const container = document.getElementById('main-content');
-      container.innerHTML = `
-        <h3>Мои задачи</h3><div id="my-tasks-table"></div>
-        <div class="card"><h4>Добавить запись времени</h4><select id="time-task-select"></select><input type="number" step="0.5" id="time-hours" placeholder="Часы (0.5, 1, 2...)" /><input type="date" id="time-date" /><textarea id="time-desc" placeholder="Что сделал"></textarea><button id="add-time-btn">Записать</button></div>
-        <div class="card"><h4>Мои записи времени</h4><div id="my-time-table"></div></div>
+    // ── ПАНЕЛЬ УПРАВЛЕНИЯ ──
+    async function renderDashboard() {
+      const tabContent = document.getElementById('tab-content');
+      tabContent.innerHTML = `
+        <div class="layout">
+          <div class="calendar-section">
+            <div class="card">
+              <div class="flex" style="justify-content: space-between;">
+                <h3>Недельный календарь</h3>
+                <button id="open-create-task-modal">+ Создать задачу</button>
+              </div>
+              <div id="week-calendar"></div>
+            </div>
+          </div>
+          <div class="task-section">
+            <div class="task-panel">
+              <h4>Мои задачи (перетащите в день)</h4>
+              <div id="draggable-tasks"></div>
+            </div>
+          </div>
+        </div>
       `;
-      const { data: myTasks } = await db.from('tasks').select('*, projects(name)').eq('assignee_id', currentUser.id);
-      document.getElementById('my-tasks-table').innerHTML = buildTasksTable(myTasks);
-      document.getElementById('time-task-select').innerHTML = myTasks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
-      document.getElementById('time-date').value = new Date().toISOString().split('T')[0];
 
-      document.getElementById('add-time-btn').onclick = async () => {
-        const task_id = document.getElementById('time-task-select').value;
-        const hours = parseFloat(document.getElementById('time-hours').value);
-        const work_date = document.getElementById('time-date').value;
-        const description = document.getElementById('time-desc').value;
-        if (!hours || hours <= 0) return alert('Введите часы');
-        await db.from('time_entries').insert({ task_id, user_id: currentUser.id, hours, work_date, description });
-        await renderMain(); // вместо reload
+      document.getElementById('open-create-task-modal').onclick = showCreateTaskModal;
+      await loadWeekCalendar();
+      await loadDraggableTasks();
+    }
+
+    // ── КАЛЕНДАРЬ НЕДЕЛИ ──
+    async function loadWeekCalendar() {
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0 вс, 1 пн...
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      monday.setHours(0,0,0,0);
+
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        days.push(d.toISOString().split('T')[0]);
+      }
+
+      // Получаем все time_entries для текущего пользователя за эту неделю
+      const { data: entries } = await db.from('time_entries')
+        .select('*, tasks(title)')
+        .eq('user_id', currentUser.id)
+        .gte('work_date', days[0])
+        .lte('work_date', days[6]);
+
+      // Группируем по дням
+      const entriesByDay = {};
+      days.forEach(d => entriesByDay[d] = []);
+      entries?.forEach(e => {
+        if (entriesByDay[e.work_date]) entriesByDay[e.work_date].push(e);
+      });
+
+      const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      let html = '<div class="week-grid">';
+      days.forEach((date, idx) => {
+        const isWeekend = idx >= 5; // сб, вс
+        const hours = entriesByDay[date].reduce((sum, e) => sum + parseFloat(e.hours), 0);
+        html += `
+          <div class="day-cell ${isWeekend ? 'weekend' : ''}" data-date="${date}"
+               ondragover="event.preventDefault(); this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')"
+               ondrop="handleTaskDrop(event, '${date}')">
+            <div class="day-header">${dayNames[idx]}<br>${date.slice(5)}</div>
+            <div class="time-entries">
+              ${entriesByDay[date].map(e => `
+                <div class="time-entry-pill">
+                  <span>${e.tasks?.title || '???'}</span>
+                  <span>${e.hours}ч</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="day-hours">${hours}/8ч</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      document.getElementById('week-calendar').innerHTML = html;
+    }
+
+    // ── ПЕРЕТАСКИВАЕМЫЕ ЗАДАЧИ ──
+    async function loadDraggableTasks() {
+      const { data: tasks } = await db.from('tasks')
+        .select('*, projects(name)')
+        .eq('assignee_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('draggable-tasks');
+      if (!tasks?.length) {
+        container.innerHTML = '<p>Нет назначенных задач</p>';
+        return;
+      }
+      container.innerHTML = tasks.map(t => `
+        <div class="task-item" draggable="true" data-task-id="${t.id}"
+             ondragstart="event.dataTransfer.setData('text/plain', '${t.id}')">
+          ${t.title} <small>(${t.projects?.name || ''})</small>
+        </div>
+      `).join('');
+    }
+
+    // Обработчик дропа (глобальная функция)
+    window.handleTaskDrop = async function(event, date) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      const taskId = event.dataTransfer.getData('text/plain');
+      if (!taskId) return;
+
+      const hours = prompt('Введите количество часов (например, 2.5):');
+      if (!hours || isNaN(hours) || hours <= 0) return;
+
+      await db.from('time_entries').insert({
+        task_id: taskId,
+        user_id: currentUser.id,
+        hours: parseFloat(hours),
+        work_date: date,
+        description: ''
+      });
+      await loadWeekCalendar(); // обновить календарь
+    };
+
+    // ── СОЗДАНИЕ ЗАДАЧИ (модальное окно) ──
+    function showCreateTaskModal() {
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>Создать задачу</h3>
+          <select id="modal-project"></select>
+          <input id="modal-task-title" placeholder="Название задачи" />
+          <textarea id="modal-task-desc" placeholder="Описание"></textarea>
+          <input type="date" id="modal-deadline" />
+          <label>Исполнитель:</label>
+          <select id="modal-assignee"><option value="">Не назначать</option></select>
+          <div class="flex" style="justify-content: flex-end; margin-top: 20px;">
+            <button id="modal-cancel" class="secondary">Отмена</button>
+            <button id="modal-save">Создать</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Заполнить проекты
+      db.from('projects').select('*').then(({ data }) => {
+        document.getElementById('modal-project').innerHTML = data.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      });
+      // Заполнить пользователей для назначения
+      db.from('profiles').select('id, full_name').then(({ data }) => {
+        document.getElementById('modal-assignee').innerHTML += data.map(u => `<option value="${u.id}">${u.full_name}</option>`).join('');
+      });
+
+      document.getElementById('modal-cancel').onclick = () => modal.remove();
+      document.getElementById('modal-save').onclick = async () => {
+        const project_id = document.getElementById('modal-project').value;
+        const title = document.getElementById('modal-task-title').value;
+        const description = document.getElementById('modal-task-desc').value;
+        const deadline = document.getElementById('modal-deadline').value || null;
+        const assignee_id = document.getElementById('modal-assignee').value || null;
+        if (!title) return alert('Введите название задачи');
+        await db.from('tasks').insert({
+          project_id, title, description, deadline,
+          created_by: currentUser.id,
+          assignee_id: assignee_id || currentUser.id // если не выбран, назначаем себя?
+        });
+        modal.remove();
+        renderMainApp(); // обновить весь интерфейс
       };
-
-      await loadMyTimeEntries();
-      subscribeToRealtime();
     }
 
-    // Наблюдатель
-    async function renderObserverView() {
-      document.getElementById('main-content').innerHTML = `
-        <h3>Обзор проектов и задач</h3><div id="obs-tasks-table"></div><div id="obs-time-table"></div>
+    // ── НОВОСТИ ──
+    async function renderNews() {
+      const tabContent = document.getElementById('tab-content');
+      tabContent.innerHTML = `
+        <div class="card">
+          <h3>Новости компании</h3>
+          ${['admin','manager'].includes(currentProfile.role) ? `
+            <div style="margin: 15px 0;">
+              <input id="news-title" placeholder="Заголовок новости" />
+              <textarea id="news-content" placeholder="Содержание"></textarea>
+              <button id="add-news-btn">Опубликовать</button>
+            </div>
+          ` : ''}
+          <div id="news-list"></div>
+        </div>
       `;
-      await loadTasksTable('obs-tasks-table');
-      await loadTimeEntriesTable('obs-time-table');
-      subscribeToRealtime();
+
+      if (['admin','manager'].includes(currentProfile.role)) {
+        document.getElementById('add-news-btn').onclick = async () => {
+          const title = document.getElementById('news-title').value;
+          const content = document.getElementById('news-content').value;
+          if (!title) return alert('Введите заголовок');
+          await db.from('news').insert({ title, content, author_id: currentUser.id });
+          loadNewsList();
+        };
+      }
+      await loadNewsList();
     }
 
-    // Вспомогательные функции рендеринга таблиц
-    function buildTasksTable(tasks) {
-      if (!tasks.length) return '<p>Нет задач</p>';
-      let html = '<table><tr><th>Проект</th><th>Задача</th><th>Статус</th><th>Исполнитель</th><th>Дедлайн</th></tr>';
-      tasks.forEach(t => { html += `<tr><td>${t.projects?.name || ''}</td><td>${t.title}</td><td>${t.status}</td><td>${t.assignee_id ? 'Назначен' : 'Не назначен'}</td><td>${t.deadline ? new Date(t.deadline).toLocaleDateString() : ''}</td></tr>`; });
-      html += '</table>';
-      return html;
+    async function loadNewsList() {
+      const { data: news } = await db.from('news').select('*, profiles(full_name)').order('created_at', { ascending: false });
+      const container = document.getElementById('news-list');
+      if (!news?.length) {
+        container.innerHTML = '<p>Новостей пока нет</p>';
+        return;
+      }
+      container.innerHTML = news.map(n => `
+        <div class="news-item">
+          <h4>${n.title}</h4>
+          <p>${n.content || ''}</p>
+          <small>${new Date(n.created_at).toLocaleString()} — ${n.profiles?.full_name || ''}</small>
+        </div>
+      `).join('');
     }
 
-    async function loadTasksTable(containerId) {
-      const { data: tasks } = await db.from('tasks').select('*, projects(name)').order('created_at', { ascending: false });
-      document.getElementById(containerId).innerHTML = buildTasksTable(tasks);
-    }
-
-    async function loadTimeEntriesTable(containerId) {
-      const { data: entries } = await db.from('time_entries').select('*, tasks(title), profiles(full_name)').order('created_at', { ascending: false });
-      if (!entries.length) { document.getElementById(containerId).innerHTML = '<p>Нет записей</p>'; return; }
-      let html = '<table><tr><th>Пользователь</th><th>Задача</th><th>Часы</th><th>Дата</th><th>Описание</th></tr>';
-      entries.forEach(e => { html += `<tr><td>${e.profiles?.full_name || ''}</td><td>${e.tasks?.title || ''}</td><td>${e.hours}</td><td>${e.work_date}</td><td>${e.description || ''}</td></tr>`; });
-      html += '</table>';
-      document.getElementById(containerId).innerHTML = html;
-    }
-
-    async function loadMyTimeEntries() {
-      const { data } = await db.from('time_entries').select('*, tasks(title)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-      const container = document.getElementById('my-time-table');
-      if (!data.length) { container.innerHTML = '<p>Нет записей</p>'; return; }
-      let html = '<table><tr><th>Задача</th><th>Часы</th><th>Дата</th><th>Описание</th></tr>';
-      data.forEach(e => { html += `<tr><td>${e.tasks?.title}</td><td>${e.hours}</td><td>${e.work_date}</td><td>${e.description || ''}</td></tr>`; });
-      html += '</table>';
-      container.innerHTML = html;
-    }
-
-    // Realtime-обновления (один раз)
+    // ── REALTIME ──
     function subscribeToRealtime() {
       if (realtimeStarted) return;
       realtimeStarted = true;
-
-      db.channel('tasks-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => renderMain())
-        .subscribe();
-
-      db.channel('time-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, () => renderMain())
+      db.channel('all-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+          if (currentTab === 'dashboard') renderMainApp();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, () => {
+          if (currentTab === 'dashboard') renderMainApp();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, () => {
+          if (currentTab === 'news') renderMainApp();
+        })
         .subscribe();
     }
 
-    // Запуск
     checkSession();
   </script>
 </body>
