@@ -29,7 +29,9 @@
     // ----- ВАЖНО: ЗАМЕНИТЕ НА РЕАЛЬНЫЕ ДАННЫЕ ИЗ  -----
     const SUPABASE_URL = 'https://lfnvvaqysqxgzjydpdhe.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbnZ2YXF5c3F4Z3pqeWRwZGhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMjIwNDYsImV4cCI6MjA5OTg5ODA0Nn0.uvvclwp0_Fa0nenCCUi9lSPERtHsDIx6uTtI4CfOMkY';
+// ------------------------------------------------
 
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
     let currentProfile = null;
