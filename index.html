@@ -27,7 +27,7 @@
   <div id="app"></div>
 
   <script>
-    // ----- ЗАМЕНИТЕ ЗНАЧЕНИЯ НА ВАШИ ИЗ SUPABASE -----
+    // ----- ВАЖНО: ЗАМЕНИТЕ ЗНАЧЕНИЯ НА ВАШИ ИЗ SUPABASE -----
     const SUPABASE_URL = 'https://lfnvvaqysqxgzjydpdhe.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbnZ2YXF5c3F4Z3pqeWRwZGhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQzMjIwNDYsImV4cCI6MjA5OTg5ODA0Nn0.uvvclwp0_Fa0nenCCUi9lSPERtHsDIx6uTtI4CfOMkY';
     // ------------------------------------------------
@@ -37,10 +37,9 @@
     let currentUser = null;
     let currentProfile = null;
 
-    // DOM элемент
     const app = document.getElementById('app');
 
-    // Проверить, авторизован ли уже
+    // Проверить сессию
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -84,7 +83,6 @@
       document.getElementById('signup-btn').onclick = async () => {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        // для простоты – full_name берём из первой части email
         const fullName = email.split('@')[0] || 'User';
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -158,7 +156,6 @@
         </div>
       `;
 
-      // Загрузить проекты в выпадающий список
       const { data: projects } = await supabase.from('projects').select('*');
       const projectSelect = document.getElementById('task-project-select');
       projectSelect.innerHTML = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
@@ -182,9 +179,40 @@
         location.reload();
       };
 
-      await loadTasksTable('all-tasks-table');
+      await renderAllTasksWithAssign();
       await loadTimeEntriesTable('all-time-table');
       subscribeToRealtime();
+    }
+
+    async function renderAllTasksWithAssign() {
+      const { data: tasks } = await supabase.from('tasks').select('*, projects(name)').order('created_at', { ascending: false });
+      const { data: users } = await supabase.from('profiles').select('id, full_name, role');
+
+      let html = '<table><tr><th>Проект</th><th>Задача</th><th>Статус</th><th>Исполнитель</th><th>Дедлайн</th><th>Действие</th></tr>';
+      tasks.forEach(t => {
+        const assignee = users?.find(u => u.id === t.assignee_id)?.full_name || 'Не назначен';
+        html += `<tr>
+          <td>${t.projects?.name || ''}</td>
+          <td>${t.title}</td>
+          <td>${t.status}</td>
+          <td>${assignee}</td>
+          <td>${t.deadline ? new Date(t.deadline).toLocaleDateString() : ''}</td>
+          <td>
+            <select id="assign-${t.id}" onchange="assignTask('${t.id}', this.value)">
+              <option value="">-- назначить --</option>
+              ${users.map(u => `<option value="${u.id}" ${t.assignee_id === u.id ? 'selected' : ''}>${u.full_name} (${u.role})</option>`).join('')}
+            </select>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('all-tasks-table').innerHTML = html;
+    }
+
+    async function assignTask(taskId, userId) {
+      if (!userId) return;
+      await supabase.from('tasks').update({ assignee_id: userId }).eq('id', taskId);
+      renderAllTasksWithAssign();
     }
 
     // ----- СОТРУДНИК -----
@@ -207,10 +235,9 @@
         </div>
       `;
 
-      // Мои задачи (назначенные на меня)
       const { data: myTasks } = await supabase.from('tasks').select('*, projects(name)').eq('assignee_id', currentUser.id);
       const myTasksDiv = document.getElementById('my-tasks-table');
-      myTasksDiv.innerHTML = buildTasksTable(myTasks, true);
+      myTasksDiv.innerHTML = buildTasksTable(myTasks);
 
       const taskSelect = document.getElementById('time-task-select');
       taskSelect.innerHTML = myTasks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
@@ -245,8 +272,8 @@
       subscribeToRealtime();
     }
 
-    // Вспомогательные функции рендеринга таблиц
-    function buildTasksTable(tasks, showAssign = false) {
+    // Вспомогательные функции
+    function buildTasksTable(tasks) {
       if (!tasks.length) return '<p>Нет задач</p>';
       let html = `<table><tr><th>Проект</th><th>Задача</th><th>Статус</th><th>Исполнитель</th><th>Дедлайн</th></tr>`;
       tasks.forEach(t => {
@@ -264,7 +291,7 @@
 
     async function loadTasksTable(containerId) {
       const { data: tasks } = await supabase.from('tasks').select('*, projects(name)').order('created_at', { ascending: false });
-      document.getElementById(containerId).innerHTML = buildTasksTable(tasks, true);
+      document.getElementById(containerId).innerHTML = buildTasksTable(tasks);
     }
 
     async function loadTimeEntriesTable(containerId) {
@@ -288,20 +315,15 @@
       container.innerHTML = html;
     }
 
-    // Realtime обновления
     function subscribeToRealtime() {
-      const tasksChannel = supabase
+      supabase
         .channel('tasks-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
-          location.reload(); // простой перезагруз, для полного обновления
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => location.reload())
         .subscribe();
 
-      const timeChannel = supabase
+      supabase
         .channel('time-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, payload => {
-          location.reload();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, () => location.reload())
         .subscribe();
     }
 
